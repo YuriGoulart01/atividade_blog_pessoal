@@ -10,6 +10,4 @@ import { TemaModule } from "../tema/tema.module";
         controllers: [PostagemController],
         exports: []
 })
-export class PostagemModule {
-
-}
+export class PostagemModule {}
