@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs
 import { AuthService } from "../services/auth.service";
 import { UsuarioLogin } from "../entities/usuariologin.entity";
 import { LocalAuthGuard } from "../guard/local-auth.guard";
+import { UsuarioLoginDto } from "../dto/usuario-login.dto";
 
 @Controller('/usuarios')
 export class AuthController {
@@ -10,9 +11,8 @@ export class AuthController {
     ){}
 
     @Post('/logar')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(LocalAuthGuard)
-    login(@Body() usuario: UsuarioLogin): Promise<any>{
-        return this.authService.login(usuario);
-    }
+  @HttpCode(HttpStatus.OK)
+  login(@Body() usuarioLoginDto: UsuarioLoginDto) {
+    return this.authService.login(usuarioLoginDto);
+  }
 }

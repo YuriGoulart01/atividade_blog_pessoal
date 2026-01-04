@@ -20,7 +20,7 @@ export class AuthService {
         if(!buscaUsuario)
             throw new HttpException('Usuario não encontrado', HttpStatus.NOT_FOUND);
 
-        const matchPassword = await this.bcrypt.compararSenhas(password, buscaUsuario.senha)
+        const matchPassword = await this.bcrypt.compararSenha(password, buscaUsuario.senha)
 
         if(buscaUsuario && matchPassword){
             const { senha, ...resposta } = buscaUsuario
@@ -30,20 +30,34 @@ export class AuthService {
         return null
     }
 
-    async login(usuarioLogin: UsuarioLogin): Promise<UsuarioResponse>{
-        const payload = { sub: usuarioLogin.usuario }
-        const buscaUsuario = await this.usuarioService.findByUsuario(usuarioLogin.usuario);
+    async login(usuarioLogin: UsuarioLogin): Promise<UsuarioResponse> {
 
-        if(!buscaUsuario)
-            throw new HttpException('Usuario não encontrado', HttpStatus.NOT_FOUND)
-        
-        return {
-            id: buscaUsuario.id,
-            nome: buscaUsuario.nome,
-            usuario: buscaUsuario.usuario,
-            foto: buscaUsuario.foto,
-            token: `Bearer ${this.jwtService.sign(payload)}`
+  const buscaUsuario = await this.usuarioService.findByUsuario(
+    usuarioLogin.usuario,
+  );
 
-        }
-    }
+  if (!buscaUsuario)
+    throw new HttpException('Usuario não encontrado', HttpStatus.UNAUTHORIZED);
+
+  const senhaValida = await this.bcrypt.compararSenha(
+    usuarioLogin.senha,
+    buscaUsuario.senha,
+  );
+
+  if (!senhaValida)
+    throw new HttpException('Senha inválida', HttpStatus.UNAUTHORIZED);
+
+  const payload = {
+    id: buscaUsuario.id,
+    usuario: buscaUsuario.usuario,
+  };
+
+  return {
+    id: buscaUsuario.id,
+    nome: buscaUsuario.nome,
+    usuario: buscaUsuario.usuario,
+    foto: buscaUsuario.foto,
+    token: this.jwtService.sign(payload),
+  };
+}
 }

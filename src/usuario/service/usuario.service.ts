@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Usuario } from "../entities/usuario.entity";
 import { Repository } from "typeorm";
+import { UsuarioCreateDto } from '../dto/usuario-create.dto';
 import { Bcrypt } from "../../auth/bcrypt/bcrypt";
 
 @Injectable()
@@ -40,27 +41,31 @@ export class UsuarioService {
         });
     }
 
-    async create(usuario: Usuario): Promise<Usuario>{
-        const buscaUsuario = await this.findByUsuario(usuario.usuario)
-        if(buscaUsuario){
-            throw new HttpException('Usuario já cadastrado', HttpStatus.BAD_REQUEST)
-        }
+    async create(usuarioDto: UsuarioCreateDto): Promise<Usuario> {
 
-        usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
-        return await this.usuarioRepository.save(usuario)
-    }
+  const buscaUsuario = await this.usuarioRepository.findOne({
+    where: { usuario: usuarioDto.usuario }
+  });
+
+  if (buscaUsuario)
+    throw new HttpException('Usuário já cadastrado!', HttpStatus.BAD_REQUEST);
+
+  const usuario = this.usuarioRepository.create(usuarioDto);
+
+  usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha);
+
+  return this.usuarioRepository.save(usuario);
+}
 
     async update(usuario: Usuario): Promise<Usuario> {
+  const usuarioExistente = await this.findById(usuario.id);
 
-        await this.findById(usuario.id);
+  const buscaUsuario = await this.findByUsuario(usuario.usuario);
 
-        const buscaUsuario = await this.findByUsuario(usuario.usuario);
-
-        if (buscaUsuario && buscaUsuario.id !== usuario.id)
-            throw new HttpException('Usuário já Cadastrado!', HttpStatus.BAD_REQUEST);
-
-        usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
-        return await this.usuarioRepository.save(usuario);
-
-    }
+  if (buscaUsuario && buscaUsuario.id !== usuario.id) {
+    throw new HttpException('Usuário já cadastrado!', HttpStatus.BAD_REQUEST);
+  }
+  usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha);
+  return await this.usuarioRepository.save(usuario);
+}
 }
